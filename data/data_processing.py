@@ -1,78 +1,123 @@
 import pandas as pd
 from pathlib import Path
-from geopy.geocoders import Nominatim
+import geopandas as gpd
 
-# Folder containing the 10,000 images
+
+# File locations
 IMAGE_FOLDER = Path("data/photos/dataset")
-
-# Coordinate CSV
 CSV_FILE = Path("coords.csv")
+COUNTRY_FILE = Path(
+    "data/raw/ne_110m_admin_0_countries.shp"
+)
 
-# Read coordinates
+
+# Load coordinates
 coords = pd.read_csv(
     CSV_FILE,
     header=None,
     names=["latitude", "longitude"]
 )
 
-# Find all PNG images
+
+# Find images
 image_files = [
-    p for p in IMAGE_FOLDER.iterdir()
+    p
+    for p in IMAGE_FOLDER.iterdir()
     if p.suffix.lower() == ".png"
 ]
 
-# Sort images by the number in their filename
+
+# Sort images numerically
 image_files = sorted(
     image_files,
     key=lambda p: int(p.stem)
 )
 
+
 print(f"Images found: {len(image_files)}")
 print(f"Coordinates found: {len(coords)}")
 
-# Make sure the numbers match
+
+# Make sure the number of images and coordinates match
 if len(image_files) != len(coords):
     raise ValueError(
         f"Number of images ({len(image_files)}) "
         f"does not match coordinates ({len(coords)})"
     )
 
-# Add filenames
-coords["filename"] = [p.name for p in image_files]
 
-# Check if dataset already exists
-if Path("dataset.csv").exists():
-    dataset = pd.read_csv("dataset.csv")
-else:
-    dataset = coords[["filename", "latitude", "longitude"]].copy()
-    dataset["country"] = ""
+# Add filenames to the coordinate data
+coords["filename"] = [
+    p.name
+    for p in image_files
+]
 
-geolocator = Nominatim(user_agent="geoguesser_ml")
 
-n = 0
+# Load the country boundaries
+print("\nLoading country boundaries...")
 
-# Find the first row without a country
-for index, row in dataset.iterrows():
-    if pd.isna(row["country"]) or row["country"] == "":
-        n = index
-        break
+world = gpd.read_file(COUNTRY_FILE)
 
-print(f"Starting at row {n}")
+print("Country dataset loaded.")
 
-# Process the next 200 rows
-batch_amount = 200 
 
-for i in range(n, n + batch_amount):
+# Create geographic points from all coordinates
+print("Creating coordinate points...")
 
-    location = geolocator.reverse(
-        (coords.loc[i, "latitude"], coords.loc[i, "longitude"])
-    )
+points = gpd.GeoDataFrame(
+    coords,
+    geometry=gpd.points_from_xy(
+        coords["longitude"],
+        coords["latitude"]
+    ),
+    crs="EPSG:4326"
+)
 
-    geo_dict = location.raw
-    dataset.loc[i, "country"] = geo_dict["address"].get("country", "")
-    print(f"Processed row {i}: {dataset.loc[i, 'country']}")
 
-# Save dataset
-dataset.to_csv("dataset.csv", index=False)
+# Match each coordinate to a country
+print("Finding countries...")
 
-print(dataset.head())
+result = gpd.sjoin(
+    points,
+    world[["ADMIN", "geometry"]],
+    how="left",
+    predicate="within"
+)
+
+
+# Add country names to our dataset
+coords["country"] = result["ADMIN"].values
+
+
+# Show some results
+print("\nFirst 10 results:")
+
+print(
+    coords[
+        [
+            "filename",
+            "latitude",
+            "longitude",
+            "country"
+        ]
+    ].head(10)
+)
+
+
+# Count successful matches
+matched = coords["country"].notna().sum()
+unmatched = coords["country"].isna().sum()
+
+print("\nResults:")
+print(f"Matched:   {matched}")
+print(f"Unmatched: {unmatched}")
+
+
+# Save the completed dataset
+coords.to_csv(
+    "dataset.csv",
+    index=False
+)
+
+print("\nSaved dataset.csv")
+
