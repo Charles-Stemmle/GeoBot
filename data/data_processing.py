@@ -7,7 +7,7 @@ import geopandas as gpd
 IMAGE_FOLDER = Path("data/photos/dataset")
 CSV_FILE = Path("coords.csv")
 COUNTRY_FILE = Path(
-    "data/raw/ne_110m_admin_0_countries.shp"
+    "data/raw/ne_10m_admin_0_countries.shp"
 )
 
 
@@ -87,6 +87,7 @@ result = gpd.sjoin(
 
 # Add country names to our dataset
 coords["country"] = result["ADMIN"].values
+coords = coords.dropna(subset=["country"])
 
 
 # Show some results
@@ -109,9 +110,8 @@ matched = coords["country"].notna().sum()
 unmatched = coords["country"].isna().sum()
 
 print("\nResults:")
-print(f"Matched:   {matched}")
-print(f"Unmatched: {unmatched}")
-
+print(f"Usable images: {len(coords)}")
+print(f"Dropped images: {10000 - len(coords)}")
 
 # Save the completed dataset
 coords.to_csv(
