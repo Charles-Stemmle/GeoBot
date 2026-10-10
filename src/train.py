@@ -12,7 +12,8 @@ from sklearn.preprocessing import LabelEncoder
 
 PROJECT_FOLDER = Path(__file__).resolve().parent.parent
 
-DATASET_FILE = PROJECT_FOLDER / "src" / "filtered_dataset.csv"
+
+DATASET_FILE = PROJECT_FOLDER / "src" / "combined_dataset.csv"
 IMAGE_FOLDER = PROJECT_FOLDER / "data" / "photos" / "dataset"
 MODEL_FOLDER = PROJECT_FOLDER / "models"
 
