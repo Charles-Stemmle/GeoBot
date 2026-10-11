@@ -9,7 +9,7 @@ LABELS_PATH = PROJECT_FOLDER / "models" / "country_labels.txt"
 IMAGE_FOLDER = PROJECT_FOLDER / "data" / "photos" / "prediction"
 
 # Change path to image being tested
-IMAGE_PATH = PROJECT_FOLDER / "data" / "photos" / "dataset" / "prediction" / "bigtone.png"
+IMAGE_PATH = PROJECT_FOLDER / "data" / "photos" / "dataset" / "prediction" / "chile.png"
 IMAGE_SIZE = (224, 224)
 
 
