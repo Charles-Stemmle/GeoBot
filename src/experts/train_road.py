@@ -1,103 +1,196 @@
 
 from pathlib import Path
 
-import numpy as np
-import torch
-from PIL import Image
-from transformers import AutoImageProcessor, AutoModelForSemanticSegmentation
-import torch.nn.functional as F
+import pandas as pd
+import tensorflow as tf
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 
 
-# Project paths
+# 1. SETTINGS
+
 PROJECT_FOLDER = Path(__file__).resolve().parents[2]
-IMAGE_FOLDER = PROJECT_FOLDER / "data" / "photos" / "dataset"
-OUTPUT_FOLDER = PROJECT_FOLDER / "data" / "photos" / "road"
 
-OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
+DATASET_FILE = PROJECT_FOLDER / "src" / "combined_dataset.csv"
+IMAGE_FOLDER = PROJECT_FOLDER / "data" / "photos" / "road"
+MODEL_FOLDER = PROJECT_FOLDER / "models"
 
-MODEL_NAME = "nvidia/segformer-b0-finetuned-ade-512-512"
-
-# ADE20K category IDs:
-# tree, grass, mountain, plant, field, flower, palm
-ROAD_IDS = [
-    6,    # road
-    11,   # sidewalk
-    20,   # car
-    43,   # signboard
-    52,   # path
-    80,   # bus
-    83,   # truck
-    87,   # streetlight
-    91,   # dirt track
-    93,   # pole
-    127,  # bicycle
-    136,  # traffic light
-]
-
-print("Loading segmentation model...")
-
-processor = AutoImageProcessor.from_pretrained(MODEL_NAME)
-model = AutoModelForSemanticSegmentation.from_pretrained(MODEL_NAME)
-model.eval()
-
-# Find image files and sort them by numeric filename when possible.
-image_files = [
-    path for path in IMAGE_FOLDER.iterdir()
-    if path.is_file() and path.suffix.lower() in [".png", ".jpg", ".jpeg"]
-]
-
-def image_sort_key(path):
-    try:
-        return (0, int(path.stem))
-    except ValueError:
-        return (1, path.name.lower())
-
-image_files.sort(key=image_sort_key)
+IMAGE_SIZE = (224, 224)
+BATCH_SIZE = 16
+EPOCHS = 10
+RANDOM_SEED = 42
 
 
-print(f"Images to process: {len(image_files)}")
+# 2. LOAD DATASET
 
-for index, image_path in enumerate(image_files, start=1):
-    output_path = OUTPUT_FOLDER / f"{image_path.stem}.png"
+print("Loading dataset...")
 
-    if output_path.exists():
-        print(f"[{index}/{len(image_files)}] Already processed: {image_path.name}")
-        continue
+data = pd.read_csv(DATASET_FILE)
 
-    try:
-        image = Image.open(image_path).convert("RGB")
-        original = np.array(image)
+# Keep only rows whose road mask exists.
+data = data[
+    data["filename"].apply(
+        lambda filename: (
+            IMAGE_FOLDER / Path(filename).with_suffix(".png").name
+        ).is_file()
+    )
+].copy()
 
-        inputs = processor(images=image, return_tensors="pt")
+print("Images with road masks:", len(data))
+print("Number of countries:", data["country"].nunique())
 
-        with torch.no_grad():
-            outputs = model(**inputs)
 
-            logits = F.interpolate(
-                outputs.logits,
-                size=(image.height, image.width),
-                mode="bilinear",
-                align_corners=False
-            )
+# 3. SPLIT TRAINING AND VALIDATION DATA
 
-            predicted_classes = logits.argmax(dim=1)[0].numpy()
+train, validation = train_test_split(
+    data,
+    test_size=0.20,
+    random_state=RANDOM_SEED,
+    stratify=data["country"]
+)
 
-        road_mask = np.isin(predicted_classes, ROAD_IDS)
+print("Training images:", len(train))
+print("Validation images:", len(validation))
 
-        result = original.copy()
-        result[~road_mask] = 0
 
-        Image.fromarray(result).save(output_path)
+# 4. ENCODE COUNTRY LABELS
 
-        percentage = road_mask.mean() * 100
+label_encoder = LabelEncoder()
 
-        print(
-            f"[{index}/{len(image_files)}] "
-            f"{image_path.name}: {percentage:.1f}% road"
+y_train = label_encoder.fit_transform(train["country"])
+y_validation = label_encoder.transform(validation["country"])
+
+num_classes = len(label_encoder.classes_)
+
+print("Number of classes:", num_classes)
+print("Countries:", list(label_encoder.classes_))
+
+
+# 5. LOAD AND PROCESS MASKED IMAGES
+
+def load_image(filename, label):
+    filename = tf.strings.regex_replace(
+        filename, r"\.[^.]+$", ".png"
+    )
+
+    image_path = tf.strings.join([
+        str(IMAGE_FOLDER) + "\\",
+        filename
+    ])
+
+    image = tf.io.read_file(image_path)
+    image = tf.io.decode_png(image, channels=3)
+    image = tf.image.resize(image, IMAGE_SIZE)
+
+    image = tf.keras.applications.mobilenet_v2.preprocess_input(
+        image
+    )
+
+    return image, label
+
+
+# 6. CREATE INPUT PIPELINE
+
+def create_dataset(dataframe, labels, shuffle=False):
+    dataset = tf.data.Dataset.from_tensor_slices(
+        (dataframe["filename"].values, labels)
+    )
+
+    if shuffle:
+        dataset = dataset.shuffle(
+            buffer_size=len(dataframe),
+            seed=RANDOM_SEED
         )
 
-    except Exception as error:
-        print(f"Failed on {image_path.name}: {error}")
+    dataset = dataset.map(
+        load_image,
+        num_parallel_calls=tf.data.AUTOTUNE
+    )
 
-print("\nBatch segmentation finished.")
-print("Results saved to:", OUTPUT_FOLDER)
+    dataset = dataset.batch(BATCH_SIZE)
+    dataset = dataset.prefetch(tf.data.AUTOTUNE)
+
+    return dataset
+
+
+print("Creating TensorFlow datasets...")
+
+train_dataset = create_dataset(train, y_train, shuffle=True)
+validation_dataset = create_dataset(validation, y_validation)
+
+
+# 7. BUILD MODEL
+
+print("Building MobileNetV2 model...")
+
+base_model = tf.keras.applications.MobileNetV2(
+    input_shape=(224, 224, 3),
+    include_top=False,
+    weights="imagenet"
+)
+
+base_model.trainable = False
+
+model = tf.keras.Sequential([
+    tf.keras.Input(shape=(224, 224, 3)),
+    base_model,
+    tf.keras.layers.GlobalAveragePooling2D(),
+    tf.keras.layers.Dropout(0.2),
+    tf.keras.layers.Dense(
+        num_classes,
+        activation="softmax"
+    )
+])
+
+
+# 8. CONFIGURE TRAINING
+
+model.compile(
+    optimizer="adam",
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"]
+)
+
+model.summary()
+
+
+# 9. TRAIN
+
+print("\nStarting road specialist training...")
+
+history = model.fit(
+    train_dataset,
+    validation_data=validation_dataset,
+    epochs=EPOCHS
+)
+
+
+# 10. EVALUATE
+
+print("\nEvaluating road specialist...")
+
+validation_loss, validation_accuracy = model.evaluate(
+    validation_dataset
+)
+
+print(f"Validation loss: {validation_loss:.4f}")
+print(f"Validation accuracy: {validation_accuracy:.2%}")
+
+
+# 11. SAVE MODEL AND LABELS
+
+MODEL_FOLDER.mkdir(parents=True, exist_ok=True)
+
+model_path = MODEL_FOLDER / "geobot_road_classifier.keras"
+model.save(model_path)
+
+labels_path = MODEL_FOLDER / "road_country_labels.txt"
+
+with open(labels_path, "w", encoding="utf-8") as file:
+    for country in label_encoder.classes_:
+        file.write(country + "\n")
+
+print("\nTraining complete!")
+print("Model saved to:", model_path)
+print("Country labels saved to:", labels_path)
