@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geobot</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --panel: #ffffff; --text: #16181d; --muted: #667085;
+    --border: #e2e5ea; --accent: #2563eb; --track: #eceef2;
+    --env: #22c55e; --road: #f59e0b; --error-bg: #fef2f2; --error: #b91c1c;
+    --warn-bg: #fffbeb; --warn: #92400e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115; --panel: #171a21; --text: #e8eaee; --muted: #9aa3b2;
+      --border: #272c36; --accent: #60a5fa; --track: #232834;
+      --error-bg: #2a1517; --error: #fca5a5; --warn-bg: #2a2214; --warn: #fcd34d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header, main { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+  header { padding-top: 28px; padding-bottom: 8px; }
+  h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  header p { margin: 0; color: var(--muted); }
+  main { display: grid; gap: 16px; padding-top: 16px; padding-bottom: 40px; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { main { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+
+  .drop {
+    display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center;
+    border: 2px dashed var(--border); border-radius: 10px; padding: 22px 12px; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop:focus-visible, .drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); outline: none; }
+  .drop span { color: var(--muted); font-size: .85rem; }
+  #status { margin-top: 10px; color: var(--muted); font-size: .9rem; min-height: 1.3em; }
+
+  .notice { border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: .9rem; }
+  .notice.error { background: var(--error-bg); color: var(--error); }
+  .notice.warn { background: var(--warn-bg); color: var(--warn); }
+
+  .stage { position: relative; margin-top: 14px; border-radius: 8px; overflow: hidden; background: #000; --ov: .55; }
+  .stage img { display: block; width: 100%; height: auto; }
+  .stage img.overlay { position: absolute; inset: 0; pointer-events: none; opacity: var(--ov); transition: opacity .15s; }
+  .stage img.overlay[hidden] { display: none; }
+  .stage[data-focus="road"] #ov-environment, .stage[data-focus="environment"] #ov-road { opacity: .06; }
+  .stage[data-focus="road"] #ov-road, .stage[data-focus="environment"] #ov-environment { opacity: .85; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-top: 12px; font-size: .9rem; }
+  .controls label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .chip { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .controls .spacer { flex: 1; }
+  .controls input[type=range] { width: 110px; }
+  .muted { color: var(--muted); }
+
+  #right { display: grid; gap: 12px; }
+  .card h2 { margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+  .card .sub { margin: 2px 0 10px; color: var(--muted); font-size: .82rem; }
+  .card.primary { border-color: var(--accent); }
+  .card.placeholder ol { opacity: .35; }
+  ol.guesses { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  ol.guesses li { display: grid; grid-template-columns: 1.4rem 1fr auto; column-gap: 8px; align-items: baseline; }
+  ol.guesses .rank { color: var(--muted); font-variant-numeric: tabular-nums; }
+  ol.guesses .pct { font-variant-numeric: tabular-nums; color: var(--muted); }
+  ol.guesses .bar { grid-column: 2 / -1; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; margin-top: 3px; }
+  ol.guesses .bar i { display: block; height: 100%; border-radius: 3px; }
+  .hint { color: var(--muted); font-size: .82rem; margin: 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Geobot</h1>
+  <p>Upload a street-level photo. Three models guess the country, and the regions the two specialists looked at are highlighted.</p>
+</header>
+
+<main>
+  <section class="panel" id="left">
+    <label class="drop" id="drop" for="file" tabindex="0">
+      <input type="file" id="file" accept="image/jpeg,image/png" hidden>
+      <strong>Drop a photo here</strong>
+      <span>or click to choose &middot; JPEG or PNG up to 10 MB &middot; you can also paste an image</span>
+    </label>
+    <div id="status" role="status"></div>
+    <div class="notice error" id="error" hidden></div>
+
+    <div id="stageWrap" hidden>
+      <div class="stage" id="stage">
+        <img id="base" alt="Uploaded photo">
+        <img class="overlay" id="ov-environment" data-region="environment" alt="">
+        <img class="overlay" id="ov-road" data-region="road" alt="">
+      </div>
+      <div class="controls">
+        <label><input type="checkbox" id="tg-environment" checked>
+          <span class="chip" style="background: var(--env)"></span>Environment
+          <span class="muted" id="cov-environment"></span></label>
+        <label><input type="checkbox" id="tg-road" checked>
+          <span class="chip" style="background: var(--road)"></span>Road &amp; traffic
+          <span class="muted" id="cov-road"></span></label>
+        <span class="spacer"></span>
+        <label class="muted">Opacity <input type="range" id="opacity" min="10" max="100" value="55"></label>
+      </div>
+      <div id="warnings"></div>
+    </div>
+  </section>
+
+  <section id="right">
+    <div class="panel card primary placeholder" id="card-consensus">
+      <h2>Final consensus</h2>
+      <p class="sub" id="weights">Weighted combination of all three models</p>
+      <ol class="guesses"></ol>
+    </div>
+    <div class="panel card placeholder" id="card-holistic" data-region="">
+      <h2>Holistic <span class="muted" style="font-weight:400">whole image</span></h2>
+      <p class="sub">Sees the full photo</p>
+      <ol class="guesses"></ol>
+    </div>
+    <div class="panel card placeholder" id="card-road" data-region="road">
+      <h2><span class="chip" style="background: var(--road)"></span>Road specialist</h2>
+      <p class="sub">Sees only road, sidewalk, vehicles, poles and signs</p>
+      <ol class="guesses"></ol>
+    </div>
+    <div class="panel card placeholder" id="card-environment" data-region="environment">
+      <h2><span class="chip" style="background: var(--env)"></span>Environment specialist</h2>
+      <p class="sub">Sees only vegetation and terrain</p>
+      <ol class="guesses"></ol>
+    </div>
+    <p class="hint">Hover a specialist card to spotlight the region it saw.</p>
+  </section>
+</main>
+
+<script>
+const COLORS = { holistic: "#2563eb", consensus: "#2563eb", road: "#f59e0b", environment: "#22c55e" };
+const MAX_BYTES = 10 * 1024 * 1024;
+const $ = (id) => document.getElementById(id);
+
+function showError(message) {
+  const box = $("error");
+  box.textContent = message || "";
+  box.hidden = !message;
+}
+
+function renderGuesses(cardId, items, color) {
+  const card = $("card-" + cardId);
+  card.classList.remove("placeholder");
+  const list = card.querySelector("ol");
+  list.replaceChildren();
+  items.forEach((item, index) => {
+    const li = document.createElement("li");
+
+    const rank = document.createElement("span");
+    rank.className = "rank";
+    rank.textContent = String(index + 1);
+
+    const name = document.createElement("span");
+    name.textContent = item.country;
+
+    const pct = document.createElement("span");
+    pct.className = "pct";
+    pct.textContent = (item.probability * 100).toFixed(1) + "%";
+
+    const bar = document.createElement("span");
+    bar.className = "bar";
+    const fill = document.createElement("i");
+    fill.style.width = Math.max(item.probability * 100, 0.5).toFixed(1) + "%";
+    fill.style.background = color;
+    bar.append(fill);
+
+    li.append(rank, name, pct, bar);
+    list.append(li);
+  });
+}
+
+function render(data) {
+  $("stageWrap").hidden = false;
+  $("base").src = data.image;
+
+  for (const region of ["environment", "road"]) {
+    const info = data.regions[region];
+    $("ov-" + region).src = info.overlay;
+    $("ov-" + region).hidden = !$("tg-" + region).checked;
+    $("cov-" + region).textContent = (info.coverage * 100).toFixed(0) + "% of image";
+  }
+
+  for (const name of ["consensus", "holistic", "road", "environment"]) {
+    renderGuesses(name, data.predictions[name], COLORS[name]);
+  }
+
+  const w = data.weights;
+  $("weights").textContent =
+    `Weights: holistic ${Math.round(w.holistic * 100)}% \u00b7 road ${Math.round(w.road * 100)}% \u00b7 environment ${Math.round(w.environment * 100)}%`;
+
+  const warnings = $("warnings");
+  warnings.replaceChildren();
+  data.warnings.forEach((text) => {
+    const div = document.createElement("div");
+    div.className = "notice warn";
+    div.textContent = text;
+    warnings.append(div);
+  });
+
+  $("status").textContent = `Done in ${(data.elapsed_ms / 1000).toFixed(1)} s`;
+}
+
+async function analyze(file) {
+  showError("");
+  if (!["image/jpeg", "image/png"].includes(file.type)) {
+    return showError("Please choose a JPEG or PNG image.");
+  }
+  if (file.size > MAX_BYTES) {
+    return showError("That file is larger than 10 MB.");
+  }
+
+  $("status").textContent = "Analyzing\u2026";
+  try {
+    const body = new FormData();
+    body.append("file", file);
+    const response = await fetch("/api/predict", { method: "POST", body });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
+    render(data);
+  } catch (error) {
+    $("status").textContent = "";
+    showError(error.message || "Something went wrong.");
+  }
+}
+
+// Upload: click, drag and drop, paste
+const drop = $("drop");
+$("file").addEventListener("change", (e) => {
+  if (e.target.files[0]) analyze(e.target.files[0]);
+  e.target.value = "";
+});
+drop.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); }
+});
+["dragenter", "dragover"].forEach((type) =>
+  drop.addEventListener(type, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((type) =>
+  drop.addEventListener(type, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", (e) => {
+  if (e.dataTransfer.files[0]) analyze(e.dataTransfer.files[0]);
+});
+document.addEventListener("paste", (e) => {
+  const file = [...(e.clipboardData?.files || [])].find((f) => f.type.startsWith("image/"));
+  if (file) analyze(file);
+});
+
+// Overlay controls
+for (const region of ["environment", "road"]) {
+  $("tg-" + region).addEventListener("change", (e) => { $("ov-" + region).hidden = !e.target.checked; });
+}
+$("opacity").addEventListener("input", (e) => {
+  $("stage").style.setProperty("--ov", e.target.value / 100);
+});
+
+// Hover a specialist card to spotlight its region
+document.querySelectorAll(".card[data-region]").forEach((card) => {
+  const region = card.dataset.region;
+  if (!region) return;
+  card.addEventListener("mouseenter", () => { $("stage").dataset.focus = region; });
+  card.addEventListener("mouseleave", () => { delete $("stage").dataset.focus; });
+});
+</script>
+</body>
+</html>

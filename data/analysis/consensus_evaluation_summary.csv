@@ -1,0 +1,5 @@
+model,top1_accuracy,top5_accuracy,images_evaluated
+holistic,50.4,84.8,500
+road,34.2,74.0,500
+environment,26.400000000000002,70.39999999999999,500
+consensus,56.8,86.6,500

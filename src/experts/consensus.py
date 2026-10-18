@@ -1,19 +1,21 @@
 # 1. IMPORTS
 
 from pathlib import Path
+
 import numpy as np
 import tensorflow as tf
 
 
 # 2. SETTINGS
 
-PROJECT_FOLDER = Path(__file__).resolve().parents[1]
+PROJECT_FOLDER = Path(__file__).resolve().parents[2]
 MODEL_FOLDER = PROJECT_FOLDER / "models"
+
+ROAD_FOLDER = PROJECT_FOLDER / "data" / "photos" / "road"
+ENVIRONMENT_FOLDER = PROJECT_FOLDER / "data" / "photos" / "environment"
 
 IMAGE_SIZE = (224, 224)
 
-# Initial weights.
-# These are starting values, not optimized weights.
 MODEL_WEIGHTS = {
     "holistic": 0.50,
     "road": 0.25,
@@ -36,18 +38,21 @@ MODEL_FILES = {
 }
 
 
-# 3. LOAD MODELS AND COUNTRY LABELS
+# 3. LOAD MODELS AND LABELS
 
 models = {}
 country_labels = {}
 
 for model_name, (model_file, labels_file) in MODEL_FILES.items():
-    model_path = MODEL_FOLDER / model_file
-    labels_path = MODEL_FOLDER / labels_file
+    models[model_name] = tf.keras.models.load_model(
+        MODEL_FOLDER / model_file
+    )
 
-    models[model_name] = tf.keras.models.load_model(model_path)
-
-    with open(labels_path, "r", encoding="utf-8") as file:
+    with open(
+        MODEL_FOLDER / labels_file,
+        "r",
+        encoding="utf-8",
+    ) as file:
         country_labels[model_name] = [
             line.strip()
             for line in file
@@ -55,10 +60,23 @@ for model_name, (model_file, labels_file) in MODEL_FILES.items():
         ]
 
     print(f"Loaded {model_name} model")
-    print(f"  Countries: {len(country_labels[model_name])}")
 
 
-# 4. LOAD AND PREPARE AN IMAGE
+# 4. FIND THE MASKED IMAGE
+
+def find_masked_image(original_path, folder):
+    masked_path = folder / f"{original_path.stem}.png"
+
+    if not masked_path.is_file():
+        raise FileNotFoundError(
+            f"Masked image not found: {masked_path}\n"
+            "Make sure the segmentation script has processed this image."
+        )
+
+    return masked_path
+
+
+# 5. LOAD AND PREPARE AN IMAGE
 
 def load_image(image_path):
     image = tf.keras.utils.load_img(
@@ -72,14 +90,33 @@ def load_image(image_path):
     return np.expand_dims(image_array, axis=0)
 
 
-# 5. GET EACH MODEL'S PREDICTIONS
+# 6. GET PREDICTIONS FROM EACH MODEL
 
 def predict(image_path):
-    image_array = load_image(image_path)
+    original_path = Path(image_path)
+
+    road_path = find_masked_image(
+        original_path,
+        ROAD_FOLDER,
+    )
+
+    environment_path = find_masked_image(
+        original_path,
+        ENVIRONMENT_FOLDER,
+    )
+
+    # Each model receives the type of image it was trained on.
+    model_inputs = {
+        "holistic": original_path,
+        "road": road_path,
+        "environment": environment_path,
+    }
 
     predictions = {}
 
     for model_name, model in models.items():
+        image_array = load_image(model_inputs[model_name])
+
         probabilities = model.predict(
             image_array,
             verbose=0,
@@ -89,9 +126,9 @@ def predict(image_path):
 
         if len(probabilities) != len(labels):
             raise ValueError(
-                f"{model_name}: model returned "
-                f"{len(probabilities)} predictions, but "
-                f"{len(labels)} country labels were loaded."
+                f"{model_name}: model output has "
+                f"{len(probabilities)} values, but "
+                f"{len(labels)} labels were loaded."
             )
 
         predictions[model_name] = dict(
@@ -101,7 +138,7 @@ def predict(image_path):
     return predictions
 
 
-# 6. COMBINE MODEL PREDICTIONS
+# 7. COMBINE PREDICTIONS
 
 def get_consensus(predictions):
     combined_scores = {}
@@ -120,7 +157,6 @@ def get_consensus(predictions):
     if total <= 0:
         raise ValueError("Consensus scores have no positive total.")
 
-    # Normalize the combined scores so they sum to 1.
     combined_scores = {
         country: score / total
         for country, score in combined_scores.items()
@@ -133,7 +169,7 @@ def get_consensus(predictions):
     )
 
 
-# 7. DISPLAY PREDICTIONS
+# 8. DISPLAY RESULTS
 
 def display_predictions(image_path):
     predictions = predict(image_path)
@@ -153,19 +189,28 @@ def display_predictions(image_path):
         )[:5]
 
         for rank, (country, probability) in enumerate(
-            top_five, start=1
+            top_five,
+            start=1,
         ):
             print(f"{rank}. {country}: {probability:.2%}")
 
     print("\nFINAL CONSENSUS TOP 5")
 
     for rank, (country, probability) in enumerate(
-        consensus[:5], start=1
+        consensus[:5],
+        start=1,
     ):
         print(f"{rank}. {country}: {probability:.2%}")
 
 
-# 8. RUN A TEST
+# 9. RUN A TEST
 
 if __name__ == "__main__":
-    image_path = input
+    image_path = input(
+        "\nEnter the path to a test image: "
+    ).strip().strip('"')
+
+    if not Path(image_path).is_file():
+        print("Error: Original image not found.")
+    else:
+        display_predictions(image_path)

@@ -1,0 +1,12 @@
+{
+  "weights": {
+    "holistic": 0.50,
+    "road": 0.25,
+    "environment": 0.25
+  },
+  "temperature": {
+    "holistic": 1.0,
+    "road": 1.0,
+    "environment": 1.0
+  }
+}
