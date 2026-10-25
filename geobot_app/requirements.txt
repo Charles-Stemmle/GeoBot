@@ -1,4 +1,4 @@
-# Use the same TensorFlow/Keras version you trained the .keras models with.
+
 tensorflow
 transformers
 fastapi
@@ -6,4 +6,3 @@ uvicorn[standard]
 python-multipart
 pillow
 numpy
-torchvision
