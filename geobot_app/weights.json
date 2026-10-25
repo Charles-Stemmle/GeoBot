@@ -1,8 +1,8 @@
 {
   "weights": {
-    "holistic": 0.50,
-    "road": 0.25,
-    "environment": 0.25
+    "holistic": 0.7,
+    "road": 0.15,
+    "environment": 0.15
   },
   "temperature": {
     "holistic": 1.0,
