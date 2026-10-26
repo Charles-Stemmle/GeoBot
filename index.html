@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="GeoBot uses computer vision to explore country prediction from street-level images.">
+<title>GeoBot | Street-Level Country Prediction</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b1020;
+    --surface: #111a2d;
+    --surface-2: #162239;
+    --text: #f4f7fb;
+    --muted: #9eacc2;
+    --line: #26344b;
+    --blue: #7cb6ff;
+    --green: #66d6a2;
+    --amber: #ffc36b;
+    --red: #ff9a9a;
+    --radius: 20px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background:
+      radial-gradient(ellipse at 78% 0%, rgba(50, 99, 170, .20), transparent 38rem),
+      var(--bg);
+    color: var(--text); font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  a { color: inherit; text-decoration: none; }
+  button, input { font: inherit; }
+  button, .button { cursor: pointer; }
+  .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+  .nav { display:flex; align-items:center; justify-content:space-between; padding:22px 0; border-bottom:1px solid rgba(158,172,194,.15); }
+  .brand { display:flex; align-items:center; gap:10px; font-size:1.08rem; font-weight:750; letter-spacing:-.03em; }
+  .brand-mark { display:grid; place-items:center; width:35px; height:35px; border-radius:12px; color:#08101e; background:linear-gradient(135deg,#a4d3ff,#67d8b2); font-weight:900; }
+  .nav-links { display:flex; align-items:center; gap:24px; color:var(--muted); font-size:.9rem; }
+  .nav-links a:hover { color:var(--text); }
+  .nav-cta { padding:9px 14px; border:1px solid var(--line); border-radius:11px; color:var(--text)!important; }
+  .hero { display:grid; grid-template-columns:1.05fr .95fr; gap:44px; align-items:center; padding:68px 0 52px; }
+  .eyebrow { display:flex; align-items:center; gap:9px; color:#9fcaff; font-size:.73rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; }
+  .dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 0 5px rgba(102,214,162,.12); }
+  h1 { margin:18px 0 18px; font-size:clamp(2.65rem,5.7vw,4.8rem); line-height:1.02; letter-spacing:-.065em; max-width:720px; }
+  h1 span { color:#8fc4ff; }
+  .hero-copy > p:not(.eyebrow) { max-width:590px; color:var(--muted); font-size:1.08rem; }
+  .actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:26px; }
+  .button { display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:12px 17px; border:1px solid var(--line); border-radius:12px; font-weight:700; transition:transform .15s,border-color .15s; }
+  .button:hover { transform:translateY(-1px); border-color:#6885aa; }
+  .button.primary { color:#08101e; border-color:transparent; background:linear-gradient(135deg,#a8d4ff,#70e0b6); }
+  .hero-foot { display:flex; gap:10px; align-items:center; margin-top:24px; color:var(--muted); font-size:.82rem; }
+  .hero-foot strong { color:var(--text); font-weight:650; }
+  .hero-visual { min-height:350px; position:relative; overflow:hidden; border:1px solid #30445e; border-radius:28px; background:linear-gradient(150deg,#1c3850,#142236 55%,#111a2a); box-shadow:0 25px 90px rgba(0,0,0,.22); }
+  .visual-grid { position:absolute; inset:0; opacity:.16; background-image:linear-gradient(rgba(169,208,255,.28) 1px,transparent 1px),linear-gradient(90deg,rgba(169,208,255,.28) 1px,transparent 1px); background-size:28px 28px; mask-image:linear-gradient(to bottom,black,transparent 85%); }
+  .visual-sun { position:absolute; width:94px; height:94px; right:16%; top:13%; border-radius:50%; background:#ffd69a; box-shadow:0 0 65px rgba(255,214,154,.25); }
+  .visual-hill { position:absolute; bottom:0; width:120%; height:45%; left:-10%; border-radius:50% 50% 0 0; background:#1d665e; transform:rotate(-8deg); }
+  .visual-hill.back { bottom:10%; left:-22%; background:#27516b; transform:rotate(9deg); }
+  .visual-road { position:absolute; bottom:-14%; left:37%; width:36%; height:74%; background:#303c4c; transform:perspective(180px) rotateX(14deg) rotate(-8deg); clip-path:polygon(42% 0,59% 0,100% 100%,0 100%); }
+  .visual-road:after { content:""; position:absolute; left:48%; top:0; height:100%; border-left:3px dashed #f7d58b; }
+  .feature-box { position:absolute; border:1px solid rgba(255,255,255,.8); border-radius:12px; box-shadow:0 0 0 1px rgba(9,18,31,.15); }
+  .feature-box span { position:absolute; left:0; top:-25px; white-space:nowrap; padding:3px 7px; border-radius:6px; font-size:.65rem; font-weight:800; letter-spacing:.08em; }
+  .feature-road { left:31%; bottom:18%; width:40%; height:32%; border-color:var(--amber); }
+  .feature-road span { background:var(--amber); color:#1b1720; }
+  .feature-env { right:7%; top:29%; width:26%; height:37%; border-color:var(--green); }
+  .feature-env span { background:var(--green); color:#092117; }
+  .visual-tag { position:absolute; left:18px; bottom:17px; display:flex; align-items:center; gap:8px; padding:8px 11px; border:1px solid rgba(255,255,255,.13); border-radius:10px; background:rgba(8,16,30,.72); backdrop-filter:blur(8px); color:#dce9f9; font-size:.72rem; }
+  .metrics { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--line); border-radius:16px; background:rgba(17,26,45,.72); }
+  .metric { padding:18px 22px; border-right:1px solid var(--line); }
+  .metric:last-child { border-right:0; }
+  .metric strong { display:block; font-size:1.45rem; letter-spacing:-.04em; }
+  .metric span { color:var(--muted); font-size:.82rem; }
+  section.content-section { padding:78px 0 0; scroll-margin-top:22px; }
+  .section-head { display:flex; justify-content:space-between; align-items:end; gap:24px; margin-bottom:25px; }
+  .section-head h2 { margin:8px 0 0; font-size:clamp(1.8rem,3vw,2.65rem); line-height:1.08; letter-spacing:-.05em; }
+  .section-head p { max-width:440px; color:var(--muted); margin:0; }
+  .kicker { margin:0; color:#9fcaff; font-size:.72rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; }
+  .workspace { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(320px,.92fr); gap:18px; align-items:start; }
+  .panel { min-width:0; border:1px solid var(--line); border-radius:var(--radius); background:linear-gradient(150deg,rgba(21,32,53,.96),rgba(15,24,41,.96)); padding:20px; }
+  .panel-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px; }
+  .panel-title h3 { margin:0; font-size:1rem; letter-spacing:-.02em; }
+  .pill { display:inline-flex; align-items:center; gap:7px; padding:5px 9px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:.72rem; }
+  .drop { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:8px; min-height:185px; padding:24px; border:1px dashed #4b6381; border-radius:15px; background:rgba(124,182,255,.035); cursor:pointer; transition:background .15s,border-color .15s; }
+  .drop:hover,.drop:focus-visible,.drop.over { outline:none; border-color:var(--blue); background:rgba(124,182,255,.09); }
+  .upload-icon { display:grid; place-items:center; width:42px; height:42px; border:1px solid #3a5473; border-radius:14px; color:var(--blue); background:#1a2b44; font-size:1.25rem; }
+  .drop strong { font-size:.95rem; }
+  .drop span { color:var(--muted); font-size:.8rem; }
+  #status { min-height:22px; margin-top:10px; color:var(--muted); font-size:.82rem; }
+  .notice { margin-top:10px; padding:10px 12px; border-radius:10px; font-size:.83rem; }
+  .notice.error { background:rgba(255,100,100,.1); color:var(--red); border:1px solid rgba(255,100,100,.22); }
+  .notice.warn { background:rgba(255,195,107,.09); color:#ffd18f; border:1px solid rgba(255,195,107,.2); }
+  .stage { position:relative; margin-top:13px; overflow:hidden; border-radius:13px; background:#070b12; --ov:.55; }
+  .stage img { display:block; width:100%; height:auto; }
+  .stage img.overlay { position:absolute; inset:0; pointer-events:none; opacity:var(--ov); transition:opacity .15s; }
+  .stage img.overlay[hidden] { display:none; }
+  .stage[data-focus="road"] #ov-environment,.stage[data-focus="environment"] #ov-road { opacity:.06; }
+  .stage[data-focus="road"] #ov-road,.stage[data-focus="environment"] #ov-environment { opacity:.85; }
+  .controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px 15px; margin-top:12px; color:var(--muted); font-size:.8rem; }
+  .controls label { display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+  .controls input[type=range] { width:90px; accent-color:var(--blue); }
+  .controls input[type=checkbox] { accent-color:var(--blue); }
+  .chip { display:inline-block; width:9px; height:9px; border-radius:3px; }
+  .spacer { flex:1; }
+  .gallery { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+  .sample { display:none; padding:0; overflow:hidden; text-align:left; color:var(--text); border:1px solid var(--line); border-radius:13px; background:var(--surface-2); }
+  .sample img { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; background:#0b1220; }
+  .sample span { display:block; padding:9px 10px; font-size:.8rem; font-weight:650; }
+  .sample:hover { border-color:#6686ac; }
+  .sample.show { display:block; }
+  .gallery-help { margin:0 0 13px; color:var(--muted); font-size:.82rem; }
+  #right { display:grid; gap:12px; }
+  .result-card { padding:16px; }
+  .result-card.primary { border-color:rgba(124,182,255,.65); background:linear-gradient(145deg,rgba(33,58,91,.68),rgba(17,26,45,.97)); }
+  .result-card h3 { display:flex; align-items:center; gap:8px; margin:0; font-size:.95rem; }
+  .result-sub { margin:3px 0 12px; color:var(--muted); font-size:.77rem; }
+  .result-card.placeholder ol { opacity:.45; }
+  ol.guesses { display:grid; gap:9px; margin:0; padding:0; list-style:none; }
+  ol.guesses li { display:grid; grid-template-columns:20px minmax(0,1fr) auto; align-items:baseline; gap:7px; }
+  .rank,.pct { color:var(--muted); font-size:.78rem; font-variant-numeric:tabular-nums; }
+  .country { font-weight:650; overflow-wrap:anywhere; }
+  .bar { grid-column:2/-1; height:5px; overflow:hidden; border-radius:99px; background:#27354a; margin-top:-3px; }
+  .bar i { display:block; height:100%; border-radius:99px; }
+  .hint { color:var(--muted); font-size:.78rem; margin:0; }
+  .model-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .model-card { padding:21px; border:1px solid var(--line); border-radius:17px; background:var(--surface); }
+  .model-number { display:grid; place-items:center; width:34px; height:34px; margin-bottom:20px; border-radius:11px; background:#1b2d47; color:var(--blue); font-size:.82rem; font-weight:800; }
+  .model-card h3 { margin:0 0 8px; font-size:1.02rem; }
+  .model-card p { margin:0; color:var(--muted); font-size:.87rem; }
+  .model-card .accent-line { width:32px; height:3px; margin-bottom:15px; border-radius:4px; background:var(--blue); }
+  .model-card:nth-child(2) .accent-line { background:var(--amber); }
+  .model-card:nth-child(3) .accent-line { background:var(--green); }
+  .results-note { margin-top:17px; padding:16px 18px; border:1px solid var(--line); border-radius:14px; color:var(--muted); background:rgba(17,26,45,.55); font-size:.86rem; }
+  footer { display:flex; justify-content:space-between; align-items:center; gap:18px; margin-top:78px; padding:24px 0 32px; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; }
+  footer a { color:var(--text); }
+  [hidden] { display:none!important; }
+  @media (max-width:850px) {
+    .hero { grid-template-columns:1fr; padding-top:48px; gap:30px; }
+    .hero-visual { min-height:300px; }
+    .workspace { grid-template-columns:1fr; }
+    .model-grid { grid-template-columns:1fr; }
+    .section-head { align-items:start; flex-direction:column; }
+  }
+  @media (max-width:600px) {
+    .shell { width:min(100% - 26px,1180px); }
+    .nav-links { gap:12px; font-size:.78rem; }
+    .nav-links a:not(.nav-cta) { display:none; }
+    .hero { padding:42px 0 32px; }
+    .hero-visual { min-height:250px; }
+    .metrics { grid-template-columns:repeat(2,1fr); }
+    .metric:nth-child(2) { border-right:0; }
+    .metric:nth-child(-n+2) { border-bottom:1px solid var(--line); }
+    section.content-section { padding-top:55px; }
+    .panel { padding:15px; }
+    .gallery { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    footer { align-items:flex-start; flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="nav" aria-label="Main navigation">
+    <a class="brand" href="#top"><span class="brand-mark">G</span> GeoBot</a>
+    <div class="nav-links">
+      <a href="#try">Try it</a><a href="#models">Models</a><a href="#about">About</a>
+      <a class="nav-cta" href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">View source ↗</a>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="dot"></span> Computer vision · Machine learning</p>
+      <h1>Can a model tell where a street photo was <span>taken?</span></h1>
+      <p>GeoBot explores country prediction from street-level imagery by comparing a general image model with specialists trained to focus on road features and the surrounding environment.</p>
+      <div class="actions">
+        <a class="button primary" href="#try">Try GeoBot <span>↓</span></a>
+        <a class="button" href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">Explore the code ↗</a>
+      </div>
+      <div class="hero-foot"><strong>3 specialist perspectives</strong><span>·</span><span>1 weighted consensus</span></div>
+    </div>
+    <div class="hero-visual" aria-label="Abstract illustration showing road and environment features being analyzed">
+      <div class="visual-grid"></div><div class="visual-sun"></div>
+      <div class="visual-hill back"></div><div class="visual-hill"></div><div class="visual-road"></div>
+      <div class="feature-box feature-road"><span>ROAD FEATURES</span></div>
+      <div class="feature-box feature-env"><span>ENVIRONMENT</span></div>
+      <div class="visual-tag"><span class="dot"></span> Visual feature analysis</div>
+    </div>
+  </header>
+
+  <div class="metrics" aria-label="Project overview">
+    <div class="metric"><strong>01</strong><span>Holistic model</span></div>
+    <div class="metric"><strong>02</strong><span>Road specialist</span></div>
+    <div class="metric"><strong>03</strong><span>Environment specialist</span></div>
+    <div class="metric"><strong>04</strong><span>Consensus ranking</span></div>
+  </div>
+
+  <section class="content-section" id="try">
+    <div class="section-head">
+      <div><p class="kicker">Interactive demo</p><h2>Test a photo yourself.</h2></div>
+      <p>Upload a JPEG or PNG, or choose one of the example images. GeoBot will rank likely countries and show the visual regions used by the specialist models.</p>
+    </div>
+
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-title"><h3>Choose an image</h3><span class="pill">JPEG / PNG · 10 MB max</span></div>
+        <label class="drop" id="drop" for="file" tabindex="0">
+          <input type="file" id="file" accept="image/jpeg,image/png" hidden>
+          <span class="upload-icon">↑</span>
+          <strong>Drop a street-level photo here</strong>
+          <span>or click to browse · you can also paste an image</span>
+        </label>
+        <div id="status" role="status" aria-live="polite"></div>
+        <div class="notice error" id="error" hidden></div>
+
+        <div id="stageWrap" hidden>
+          <div class="stage" id="stage">
+            <img id="base" alt="Selected street-level photo">
+            <img class="overlay" id="ov-environment" alt="">
+            <img class="overlay" id="ov-road" alt="">
+          </div>
+          <div class="controls">
+            <label><input type="checkbox" id="tg-environment" checked><span class="chip" style="background:var(--green)"></span>Environment <span id="cov-environment"></span></label>
+            <label><input type="checkbox" id="tg-road" checked><span class="chip" style="background:var(--amber)"></span>Road &amp; traffic <span id="cov-road"></span></label>
+            <span class="spacer"></span>
+            <label>Opacity <input type="range" id="opacity" min="10" max="100" value="55"></label>
+          </div>
+          <div id="warnings"></div>
+        </div>
+      </div>
+
+      <div id="right">
+        <div class="panel result-card primary placeholder" id="card-consensus">
+          <div class="panel-title"><h3>Final consensus</h3><span class="pill">Combined model</span></div>
+          <p class="result-sub" id="weights">Weighted combination of all three models</p>
+          <ol class="guesses"><li><span class="rank">—</span><span class="country">Predictions appear here</span><span class="pct"></span></li></ol>
+        </div>
+        <div class="panel result-card placeholder" id="card-holistic">
+          <h3>Holistic <span class="pill">Whole image</span></h3><p class="result-sub">Looks at the full photo.</p>
+          <ol class="guesses"><li><span class="rank">—</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
+        </div>
+        <div class="panel result-card placeholder" id="card-road">
+          <h3><span class="chip" style="background:var(--amber)"></span>Road specialist</h3><p class="result-sub">Focuses on roads, sidewalks, vehicles, poles and signs.</p>
+          <ol class="guesses"><li><span class="rank">—</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
+        </div>
+        <div class="panel result-card placeholder" id="card-environment">
+          <h3><span class="chip" style="background:var(--green)"></span>Environment specialist</h3><p class="result-sub">Focuses on vegetation and terrain.</p>
+          <ol class="guesses"><li><span class="rank">—</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
+        </div>
+        <p class="hint">Hover over a specialist result to spotlight its region on the image.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section" id="examples">
+    <div class="section-head">
+      <div><p class="kicker">Try a sample</p><h2>Explore with example images.</h2></div>
+      <p>Sample cards appear automatically when you add images to the examples folder in the repository.</p>
+    </div>
+    <p class="gallery-help" id="galleryHelp">No example images found yet. Add JPEG or PNG files to <code>geobot_app/static/examples/</code> to enable one-click demos.</p>
+    <div class="gallery" id="gallery">
+      <button class="sample" type="button" data-src="/static/examples/example-1.jpg"><img alt="Example street scene"><span>Example 01 · Street scene</span></button>
+      <button class="sample" type="button" data-src="/static/examples/example-2.jpg"><img alt="Example road and landscape"><span>Example 02 · Road &amp; landscape</span></button>
+      <button class="sample" type="button" data-src="/static/examples/example-3.jpg"><img alt="Example neighborhood"><span>Example 03 · Neighborhood</span></button>
+    </div>
+  </section>
+
+  <section class="content-section" id="models">
+    <div class="section-head">
+      <div><p class="kicker">How it works</p><h2>Three views of the same place.</h2></div>
+      <p>Each model contributes a different kind of visual evidence. The consensus combines their scores using configurable weights.</p>
+    </div>
+    <div class="model-grid">
+      <article class="model-card"><div class="model-number">01</div><div class="accent-line"></div><h3>Holistic model</h3><p>Analyzes the full image to learn broad patterns such as architecture, road layout, and the overall scene.</p></article>
+      <article class="model-card"><div class="model-number">02</div><div class="accent-line"></div><h3>Road specialist</h3><p>Uses a segmented view focused on road-related features, including sidewalks, vehicles, poles, and signs.</p></article>
+      <article class="model-card"><div class="model-number">03</div><div class="accent-line"></div><h3>Environment specialist</h3><p>Uses a segmented view emphasizing vegetation and terrain that may help distinguish regions.</p></article>
+    </div>
+  </section>
+
+  <section class="content-section" id="about">
+    <div class="section-head">
+      <div><p class="kicker">About the project</p><h2>Experiment, compare, improve.</h2></div>
+      <p>GeoBot is an ongoing machine learning project investigating whether specialized visual features can improve country-level image classification.</p>
+    </div>
+    <div class="results-note">The percentages shown are model scores, not guaranteed real-world probabilities. Accuracy depends on the image, the training data, and whether the photo resembles examples the models learned from. This is an experimental project, so results should be interpreted with that limitation in mind.</div>
+  </section>
+
+  <footer>
+    <span>GeoBot · A computer vision portfolio project</span>
+    <a href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">Source code on GitHub ↗</a>
+  </footer>
+</div>
+
+<script>
+const COLORS = { holistic: "#7cb6ff", consensus: "#7cb6ff", road: "#ffc36b", environment: "#66d6a2" };
+const MAX_BYTES = 10 * 1024 * 1024;
+const $ = (id) => document.getElementById(id);
+
+function showError(message) {
+  const box = $("error");
+  box.textContent = message || "";
+  box.hidden = !message;
+}
+
+function renderGuesses(cardId, items, color) {
+  const card = $("card-" + cardId);
+  card.classList.remove("placeholder");
+  const list = card.querySelector("ol");
+  list.replaceChildren();
+  items.forEach((item, index) => {
+    const li = document.createElement("li");
+    const rank = document.createElement("span");
+    rank.className = "rank";
+    rank.textContent = String(index + 1).padStart(2, "0");
+    const name = document.createElement("span");
+    name.className = "country";
+    name.textContent = item.country;
+    const pct = document.createElement("span");
+    pct.className = "pct";
+    pct.textContent = (item.probability * 100).toFixed(1) + "%";
+    const bar = document.createElement("span");
+    bar.className = "bar";
+    const fill = document.createElement("i");
+    fill.style.width = Math.max(item.probability * 100, 0.5).toFixed(1) + "%";
+    fill.style.background = color;
+    bar.append(fill);
+    li.append(rank, name, pct, bar);
+    list.append(li);
+  });
+}
+
+function render(data) {
+  $("stageWrap").hidden = false;
+  $("base").src = data.image;
+  for (const region of ["environment", "road"]) {
+    const info = data.regions[region];
+    $("ov-" + region).src = info.overlay;
+    $("ov-" + region).hidden = !$("tg-" + region).checked;
+    $("cov-" + region).textContent = (info.coverage * 100).toFixed(0) + "% coverage";
+  }
+  for (const name of ["consensus", "holistic", "road", "environment"]) {
+    renderGuesses(name, data.predictions[name], COLORS[name]);
+  }
+  const w = data.weights;
+  $("weights").textContent = `Weights: holistic ${Math.round(w.holistic * 100)}% · road ${Math.round(w.road * 100)}% · environment ${Math.round(w.environment * 100)}%`;
+  const warnings = $("warnings");
+  warnings.replaceChildren();
+  (data.warnings || []).forEach((message) => {
+    const div = document.createElement("div");
+    div.className = "notice warn";
+    div.textContent = message;
+    warnings.append(div);
+  });
+  $("status").textContent = `Analysis complete · ${(data.elapsed_ms / 1000).toFixed(1)} seconds`;
+}
+
+async function analyze(file) {
+  showError("");
+  if (!["image/jpeg", "image/png"].includes(file.type)) {
+    showError("Please choose a JPEG or PNG image.");
+    return;
+  }
+  if (file.size > MAX_BYTES) {
+    showError("That file is larger than 10 MB.");
+    return;
+  }
+  $("status").textContent = "Analyzing image… The first request may take longer while the server wakes up.";
+  $("stageWrap").hidden = true;
+  try {
+    const body = new FormData();
+    body.append("file", file);
+    const response = await fetch("/api/predict", { method: "POST", body });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
+    render(data);
+  } catch (error) {
+    $("status").textContent = "";
+    showError(error.message || "Something went wrong. Please try again.");
+  }
+}
+
+const drop = $("drop");
+$("file").addEventListener("change", (event) => {
+  if (event.target.files[0]) analyze(event.target.files[0]);
+  event.target.value = "";
+});
+drop.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); $("file").click(); }
+});
+["dragenter", "dragover"].forEach((type) => drop.addEventListener(type, (event) => {
+  event.preventDefault(); drop.classList.add("over");
+}));
+["dragleave", "drop"].forEach((type) => drop.addEventListener(type, (event) => {
+  event.preventDefault(); drop.classList.remove("over");
+}));
+drop.addEventListener("drop", (event) => {
+  if (event.dataTransfer.files[0]) analyze(event.dataTransfer.files[0]);
+});
+document.addEventListener("paste", (event) => {
+  const file = [...(event.clipboardData?.files || [])].find((item) => ["image/jpeg", "image/png"].includes(item.type));
+  if (file) analyze(file);
+});
+for (const region of ["environment", "road"]) {
+  $("tg-" + region).addEventListener("change", (event) => { $("ov-" + region).hidden = !event.target.checked; });
+}
+$("opacity").addEventListener("input", (event) => $("stage").style.setProperty("--ov", event.target.value / 100));
+document.querySelectorAll(".result-card").forEach((card) => {
+  const region = card.id.replace("card-", "");
+  if (!["road", "environment"].includes(region)) return;
+  card.addEventListener("mouseenter", () => { $("stage").dataset.focus = region; });
+  card.addEventListener("mouseleave", () => { delete $("stage").dataset.focus; });
+});
+
+// Example gallery: cards are shown only when their corresponding file exists.
+async function prepareExamples() {
+  const cards = [...document.querySelectorAll(".sample")];
+  let found = 0;
+  for (const card of cards) {
+    const src = card.dataset.src;
+    try {
+      const response = await fetch(src, { method: "HEAD" });
+      if (!response.ok) continue;
+      const img = card.querySelector("img");
+      img.src = src;
+      card.classList.add("show");
+      card.addEventListener("click", async () => {
+        $("status").textContent = "Loading example image…";
+        try {
+          const imageResponse = await fetch(src);
+          if (!imageResponse.ok) throw new Error("Could not load this example image.");
+          const blob = await imageResponse.blob();
+          const type = blob.type || (src.endsWith(".png") ? "image/png" : "image/jpeg");
+          const file = new File([blob], src.split("/").pop(), { type });
+          await analyze(file);
+          $("try").scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (error) {
+          showError(error.message || "Could not load this example image.");
+        }
+      });
+      found++;
+    } catch (_) {}
+  }
+  if (found > 0) $("galleryHelp").textContent = "Choose an example to run it through all four prediction panels.";
+}
+prepareExamples();
+</script>
+</body>
+</html>
