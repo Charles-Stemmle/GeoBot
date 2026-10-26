@@ -254,9 +254,6 @@
     </div>
     <p class="gallery-help" id="galleryHelp">No example images found yet. Add JPEG or PNG files to <code>geobot_app/static/examples/</code> to enable one-click demos.</p>
     <div class="gallery" id="gallery">
-      <button class="sample" type="button" data-src="/static/examples/example-1.png"><img alt="Example street scene"><span>01 · Street scene</span></button>
-      <button class="sample" type="button" data-src="/static/examples/example-2.png"><img alt="Example road and landscape"><span>02 · Road &amp; landscape</span></button>
-      <button class="sample" type="button" data-src="/static/examples/example-3.png"><img alt="Example neighborhood"><span>03 · Neighborhood</span></button>
     </div>
   </section>
 
@@ -412,34 +409,50 @@ document.querySelectorAll(".result-card").forEach((card) => {
   card.addEventListener("mouseleave", () => { delete $("stage").dataset.focus; });
 });
 
-// Example gallery: cards are shown only when their corresponding file exists.
-async function prepareExamples() {
-  const cards = [...document.querySelectorAll(".sample")];
-  let found = 0;
-  for (const card of cards) {
-    const src = card.dataset.src;
+// Example gallery: auto-discovers static/examples/example-1..6 as .png/.jpg/.jpeg.
+async function findExample(n) {
+  for (const ext of ["png", "jpg", "jpeg"]) {
+    const src = `/static/examples/example-${n}.${ext}`;
     try {
-      const response = await fetch(src, { method: "HEAD" });
-      if (!response.ok) continue;
-      const img = card.querySelector("img");
-      img.src = src;
-      card.classList.add("show");
-      card.addEventListener("click", async () => {
-        $("status").textContent = "Loading example image…";
-        try {
-          const imageResponse = await fetch(src);
-          if (!imageResponse.ok) throw new Error("Could not load this example image.");
-          const blob = await imageResponse.blob();
-          const type = blob.type || (src.endsWith(".png") ? "image/png" : "image/jpeg");
-          const file = new File([blob], src.split("/").pop(), { type });
-          await analyze(file);
-          $("try").scrollIntoView({ behavior: "smooth", block: "start" });
-        } catch (error) {
-          showError(error.message || "Could not load this example image.");
-        }
-      });
-      found++;
+      const r = await fetch(src, { method: "HEAD" });
+      if (r.ok) return src;
     } catch (_) {}
+  }
+  return null;
+}
+
+function addExample(src, n) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "sample show";
+  const img = document.createElement("img");
+  img.src = src;
+  img.alt = `Example ${n}`;
+  const label = document.createElement("span");
+  label.textContent = `Example ${String(n).padStart(2, "0")}`;
+  btn.append(img, label);
+  btn.addEventListener("click", async () => {
+    $("status").textContent = "Loading example image…";
+    try {
+      const imageResponse = await fetch(src);
+      if (!imageResponse.ok) throw new Error("Could not load this example image.");
+      const blob = await imageResponse.blob();
+      const type = blob.type || (src.endsWith(".png") ? "image/png" : "image/jpeg");
+      const file = new File([blob], src.split("/").pop(), { type });
+      await analyze(file);
+      $("try").scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) {
+      showError(error.message || "Could not load this example image.");
+    }
+  });
+  $("gallery").append(btn);
+}
+
+async function prepareExamples() {
+  let found = 0;
+  for (let n = 1; n <= 6; n++) {
+    const src = await findExample(n);
+    if (src) { addExample(src, n); found++; }
   }
   if (found > 0) $("galleryHelp").textContent = "Choose an example to run it through all four prediction panels.";
 }
