@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -160,7 +160,7 @@
     <a class="brand" href="#top"><i></i>GeoBot</a>
     <div class="nav-links">
       <a href="#try">Demo</a><a href="#models">Models</a><a href="#about">About</a>
-      <a href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">GitHub ↗</a>
+      <a href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">GitHub â†—</a>
     </div>
   </nav>
 
@@ -171,7 +171,7 @@
       <p class="lede">GeoBot predicts the country of a street-level image by comparing a general model with two specialists, one reading the road, the other the landscape, then combining their scores into a single ranking.</p>
       <div class="actions">
         <a class="btn primary" href="#try">Try it</a>
-        <a class="btn" href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">View source ↗</a>
+        <a class="btn" href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">View source â†—</a>
       </div>
     </div>
     <svg class="schematic" viewBox="0 0 360 220" role="img" aria-label="Three models feeding a weighted consensus">
@@ -195,12 +195,12 @@
 
     <div class="workspace">
       <div class="left">
-        <div class="bar-top"><h3>Image</h3><span class="label">JPEG / PNG · 10 MB</span></div>
+        <div class="bar-top"><h3>Image</h3><span class="label">JPEG / PNG Â· 10 MB</span></div>
         <label class="drop" id="drop" for="file" tabindex="0">
           <input type="file" id="file" accept="image/jpeg,image/png" hidden>
           <span class="plus">+</span>
           <strong>Drop a street-level photo</strong>
-          <span class="sub">or click to browse · paste also works</span>
+          <span class="sub">or click to browse Â· paste also works</span>
         </label>
         <div id="status" role="status" aria-live="polite"></div>
         <div class="notice error" id="error" hidden></div>
@@ -225,19 +225,19 @@
         <div class="result-card primary placeholder" id="card-consensus">
           <h3>Consensus <span class="tag">Combined</span></h3>
           <p class="result-sub" id="weights">Weighted combination of all three models</p>
-          <ol class="guesses"><li><span class="rank">—</span><span class="country">Predictions appear here</span><span class="pct"></span></li></ol>
+          <ol class="guesses"><li><span class="rank">â€”</span><span class="country">Predictions appear here</span><span class="pct"></span></li></ol>
         </div>
         <div class="result-card placeholder" id="card-holistic">
           <h3>Holistic <span class="tag">Whole image</span></h3><p class="result-sub">Looks at the full photo.</p>
-          <ol class="guesses"><li><span class="rank">—</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
+          <ol class="guesses"><li><span class="rank">â€”</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
         </div>
         <div class="result-card placeholder" id="card-road">
           <h3><span class="chip" style="background:var(--road)"></span>Road specialist</h3><p class="result-sub">Roads, sidewalks, vehicles, poles and signs.</p>
-          <ol class="guesses"><li><span class="rank">—</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
+          <ol class="guesses"><li><span class="rank">â€”</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
         </div>
         <div class="result-card placeholder" id="card-environment">
           <h3><span class="chip" style="background:var(--env)"></span>Environment specialist</h3><p class="result-sub">Vegetation and terrain.</p>
-          <ol class="guesses"><li><span class="rank">—</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
+          <ol class="guesses"><li><span class="rank">â€”</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
         </div>
         <p class="hint">Hover a specialist to spotlight its region on the image.</p>
       </div>
@@ -252,7 +252,7 @@
         <p>Cards appear automatically when images are added to the examples folder.</p>
       </div>
     </div>
-    <p class="gallery-help" id="galleryHelp">No example images found yet. Add JPEG or PNG files to <code>geobot_app/static/examples/</code> to enable one-click demos.</p>
+    <p class="gallery-help" id="galleryHelp">No example images found yet. Add JPEG or PNG files to <code>static/examples/</code> to enable one-click demos.</p>
     <div class="gallery" id="gallery">
     </div>
   </section>
@@ -284,8 +284,8 @@
   </section>
 
   <footer>
-    <span>GeoBot · Computer vision portfolio project</span>
-    <a href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">Source on GitHub ↗</a>
+    <span>GeoBot Â· Computer vision portfolio project</span>
+    <a href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">Source on GitHub â†—</a>
   </footer>
 </div>
 
@@ -340,7 +340,7 @@ function render(data) {
     renderGuesses(name, data.predictions[name], COLORS[name]);
   }
   const w = data.weights;
-  $("weights").textContent = `Weights: holistic ${Math.round(w.holistic * 100)}% · road ${Math.round(w.road * 100)}% · environment ${Math.round(w.environment * 100)}%`;
+  $("weights").textContent = `Weights: holistic ${Math.round(w.holistic * 100)}% Â· road ${Math.round(w.road * 100)}% Â· environment ${Math.round(w.environment * 100)}%`;
   const warnings = $("warnings");
   warnings.replaceChildren();
   (data.warnings || []).forEach((message) => {
@@ -349,7 +349,7 @@ function render(data) {
     div.textContent = message;
     warnings.append(div);
   });
-  $("status").textContent = `Analysis complete · ${(data.elapsed_ms / 1000).toFixed(1)}s`;
+  $("status").textContent = `Analysis complete Â· ${(data.elapsed_ms / 1000).toFixed(1)}s`;
 }
 
 async function analyze(file) {
@@ -362,7 +362,7 @@ async function analyze(file) {
     showError("That file is larger than 10 MB.");
     return;
   }
-  $("status").textContent = "Analyzing… the first request may take longer while the server wakes up.";
+  $("status").textContent = "Analyzingâ€¦ the first request may take longer while the server wakes up.";
   $("stageWrap").hidden = true;
   try {
     const body = new FormData();
@@ -412,7 +412,7 @@ document.querySelectorAll(".result-card").forEach((card) => {
 // Example gallery: auto-discovers static/examples/example-1..6 as .png/.jpg/.jpeg.
 async function findExample(n) {
   for (const ext of ["png", "jpg", "jpeg"]) {
-    const src = `/static/examples/example-${n}.${ext}`;
+    const src = `./static/examples/example-${n}.${ext}`;
     try {
       const r = await fetch(src, { method: "HEAD" });
       if (r.ok) return src;
@@ -432,7 +432,7 @@ function addExample(src, n) {
   label.textContent = `Example ${String(n).padStart(2, "0")}`;
   btn.append(img, label);
   btn.addEventListener("click", async () => {
-    $("status").textContent = "Loading example image…";
+    $("status").textContent = "Loading example imageâ€¦";
     try {
       const imageResponse = await fetch(src);
       if (!imageResponse.ok) throw new Error("Could not load this example image.");
