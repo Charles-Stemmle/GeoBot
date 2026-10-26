@@ -8,204 +8,199 @@
 <style>
   :root {
     color-scheme: dark;
-    --bg: #0b1020;
-    --surface: #111a2d;
-    --surface-2: #162239;
-    --text: #f4f7fb;
-    --muted: #9eacc2;
-    --line: #26344b;
-    --blue: #7cb6ff;
-    --green: #66d6a2;
-    --amber: #ffc36b;
-    --red: #ff9a9a;
-    --radius: 20px;
+    --bg: #09090b;
+    --panel: #0f0f12;
+    --line: #1f1f25;
+    --line-2: #2c2c34;
+    --text: #ededf0;
+    --muted: #8b8b96;
+    --dim: #5c5c66;
+    --accent: #f2f2f4;
+    --road: #e8b04a;
+    --env: #5fbf8f;
+    --err: #ef8585;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    margin: 0; background:
-      radial-gradient(ellipse at 78% 0%, rgba(50, 99, 170, .20), transparent 38rem),
-      var(--bg);
-    color: var(--text); font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
   a { color: inherit; text-decoration: none; }
   button, input { font: inherit; }
-  button, .button { cursor: pointer; }
-  .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
-  .nav { display:flex; align-items:center; justify-content:space-between; padding:22px 0; border-bottom:1px solid rgba(158,172,194,.15); }
-  .brand { display:flex; align-items:center; gap:10px; font-size:1.08rem; font-weight:750; letter-spacing:-.03em; }
-  .brand-mark { display:grid; place-items:center; width:35px; height:35px; border-radius:12px; color:#08101e; background:linear-gradient(135deg,#a4d3ff,#67d8b2); font-weight:900; }
-  .nav-links { display:flex; align-items:center; gap:24px; color:var(--muted); font-size:.9rem; }
-  .nav-links a:hover { color:var(--text); }
-  .nav-cta { padding:9px 14px; border:1px solid var(--line); border-radius:11px; color:var(--text)!important; }
-  .hero { display:grid; grid-template-columns:1.05fr .95fr; gap:44px; align-items:center; padding:68px 0 52px; }
-  .eyebrow { display:flex; align-items:center; gap:9px; color:#9fcaff; font-size:.73rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; }
-  .dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 0 5px rgba(102,214,162,.12); }
-  h1 { margin:18px 0 18px; font-size:clamp(2.65rem,5.7vw,4.8rem); line-height:1.02; letter-spacing:-.065em; max-width:720px; }
-  h1 span { color:#8fc4ff; }
-  .hero-copy > p:not(.eyebrow) { max-width:590px; color:var(--muted); font-size:1.08rem; }
-  .actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:26px; }
-  .button { display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:12px 17px; border:1px solid var(--line); border-radius:12px; font-weight:700; transition:transform .15s,border-color .15s; }
-  .button:hover { transform:translateY(-1px); border-color:#6885aa; }
-  .button.primary { color:#08101e; border-color:transparent; background:linear-gradient(135deg,#a8d4ff,#70e0b6); }
-  .hero-foot { display:flex; gap:10px; align-items:center; margin-top:24px; color:var(--muted); font-size:.82rem; }
-  .hero-foot strong { color:var(--text); font-weight:650; }
-  .hero-visual { min-height:350px; position:relative; overflow:hidden; border:1px solid #30445e; border-radius:28px; background:linear-gradient(150deg,#1c3850,#142236 55%,#111a2a); box-shadow:0 25px 90px rgba(0,0,0,.22); }
-  .visual-grid { position:absolute; inset:0; opacity:.16; background-image:linear-gradient(rgba(169,208,255,.28) 1px,transparent 1px),linear-gradient(90deg,rgba(169,208,255,.28) 1px,transparent 1px); background-size:28px 28px; mask-image:linear-gradient(to bottom,black,transparent 85%); }
-  .visual-sun { position:absolute; width:94px; height:94px; right:16%; top:13%; border-radius:50%; background:#ffd69a; box-shadow:0 0 65px rgba(255,214,154,.25); }
-  .visual-hill { position:absolute; bottom:0; width:120%; height:45%; left:-10%; border-radius:50% 50% 0 0; background:#1d665e; transform:rotate(-8deg); }
-  .visual-hill.back { bottom:10%; left:-22%; background:#27516b; transform:rotate(9deg); }
-  .visual-road { position:absolute; bottom:-14%; left:37%; width:36%; height:74%; background:#303c4c; transform:perspective(180px) rotateX(14deg) rotate(-8deg); clip-path:polygon(42% 0,59% 0,100% 100%,0 100%); }
-  .visual-road:after { content:""; position:absolute; left:48%; top:0; height:100%; border-left:3px dashed #f7d58b; }
-  .feature-box { position:absolute; border:1px solid rgba(255,255,255,.8); border-radius:12px; box-shadow:0 0 0 1px rgba(9,18,31,.15); }
-  .feature-box span { position:absolute; left:0; top:-25px; white-space:nowrap; padding:3px 7px; border-radius:6px; font-size:.65rem; font-weight:800; letter-spacing:.08em; }
-  .feature-road { left:31%; bottom:18%; width:40%; height:32%; border-color:var(--amber); }
-  .feature-road span { background:var(--amber); color:#1b1720; }
-  .feature-env { right:7%; top:29%; width:26%; height:37%; border-color:var(--green); }
-  .feature-env span { background:var(--green); color:#092117; }
-  .visual-tag { position:absolute; left:18px; bottom:17px; display:flex; align-items:center; gap:8px; padding:8px 11px; border:1px solid rgba(255,255,255,.13); border-radius:10px; background:rgba(8,16,30,.72); backdrop-filter:blur(8px); color:#dce9f9; font-size:.72rem; }
-  .metrics { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--line); border-radius:16px; background:rgba(17,26,45,.72); }
-  .metric { padding:18px 22px; border-right:1px solid var(--line); }
-  .metric:last-child { border-right:0; }
-  .metric strong { display:block; font-size:1.45rem; letter-spacing:-.04em; }
-  .metric span { color:var(--muted); font-size:.82rem; }
-  section.content-section { padding:78px 0 0; scroll-margin-top:22px; }
-  .section-head { display:flex; justify-content:space-between; align-items:end; gap:24px; margin-bottom:25px; }
-  .section-head h2 { margin:8px 0 0; font-size:clamp(1.8rem,3vw,2.65rem); line-height:1.08; letter-spacing:-.05em; }
-  .section-head p { max-width:440px; color:var(--muted); margin:0; }
-  .kicker { margin:0; color:#9fcaff; font-size:.72rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; }
-  .workspace { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(320px,.92fr); gap:18px; align-items:start; }
-  .panel { min-width:0; border:1px solid var(--line); border-radius:var(--radius); background:linear-gradient(150deg,rgba(21,32,53,.96),rgba(15,24,41,.96)); padding:20px; }
-  .panel-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px; }
-  .panel-title h3 { margin:0; font-size:1rem; letter-spacing:-.02em; }
-  .pill { display:inline-flex; align-items:center; gap:7px; padding:5px 9px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:.72rem; }
-  .drop { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:8px; min-height:185px; padding:24px; border:1px dashed #4b6381; border-radius:15px; background:rgba(124,182,255,.035); cursor:pointer; transition:background .15s,border-color .15s; }
-  .drop:hover,.drop:focus-visible,.drop.over { outline:none; border-color:var(--blue); background:rgba(124,182,255,.09); }
-  .upload-icon { display:grid; place-items:center; width:42px; height:42px; border:1px solid #3a5473; border-radius:14px; color:var(--blue); background:#1a2b44; font-size:1.25rem; }
-  .drop strong { font-size:.95rem; }
-  .drop span { color:var(--muted); font-size:.8rem; }
-  #status { min-height:22px; margin-top:10px; color:var(--muted); font-size:.82rem; }
-  .notice { margin-top:10px; padding:10px 12px; border-radius:10px; font-size:.83rem; }
-  .notice.error { background:rgba(255,100,100,.1); color:var(--red); border:1px solid rgba(255,100,100,.22); }
-  .notice.warn { background:rgba(255,195,107,.09); color:#ffd18f; border:1px solid rgba(255,195,107,.2); }
-  .stage { position:relative; margin-top:13px; overflow:hidden; border-radius:13px; background:#070b12; --ov:.55; }
-  .stage img { display:block; width:100%; height:auto; }
-  .stage img.overlay { position:absolute; inset:0; pointer-events:none; opacity:var(--ov); transition:opacity .15s; }
-  .stage img.overlay[hidden] { display:none; }
-  .stage[data-focus="road"] #ov-environment,.stage[data-focus="environment"] #ov-road { opacity:.06; }
-  .stage[data-focus="road"] #ov-road,.stage[data-focus="environment"] #ov-environment { opacity:.85; }
-  .controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px 15px; margin-top:12px; color:var(--muted); font-size:.8rem; }
-  .controls label { display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
-  .controls input[type=range] { width:90px; accent-color:var(--blue); }
-  .controls input[type=checkbox] { accent-color:var(--blue); }
-  .chip { display:inline-block; width:9px; height:9px; border-radius:3px; }
-  .spacer { flex:1; }
-  .gallery { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
-  .sample { display:none; padding:0; overflow:hidden; text-align:left; color:var(--text); border:1px solid var(--line); border-radius:13px; background:var(--surface-2); }
-  .sample img { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; background:#0b1220; }
-  .sample span { display:block; padding:9px 10px; font-size:.8rem; font-weight:650; }
-  .sample:hover { border-color:#6686ac; }
-  .sample.show { display:block; }
-  .gallery-help { margin:0 0 13px; color:var(--muted); font-size:.82rem; }
-  #right { display:grid; gap:12px; }
-  .result-card { padding:16px; }
-  .result-card.primary { border-color:rgba(124,182,255,.65); background:linear-gradient(145deg,rgba(33,58,91,.68),rgba(17,26,45,.97)); }
-  .result-card h3 { display:flex; align-items:center; gap:8px; margin:0; font-size:.95rem; }
-  .result-sub { margin:3px 0 12px; color:var(--muted); font-size:.77rem; }
-  .result-card.placeholder ol { opacity:.45; }
-  ol.guesses { display:grid; gap:9px; margin:0; padding:0; list-style:none; }
-  ol.guesses li { display:grid; grid-template-columns:20px minmax(0,1fr) auto; align-items:baseline; gap:7px; }
-  .rank,.pct { color:var(--muted); font-size:.78rem; font-variant-numeric:tabular-nums; }
-  .country { font-weight:650; overflow-wrap:anywhere; }
-  .bar { grid-column:2/-1; height:5px; overflow:hidden; border-radius:99px; background:#27354a; margin-top:-3px; }
-  .bar i { display:block; height:100%; border-radius:99px; }
-  .hint { color:var(--muted); font-size:.78rem; margin:0; }
-  .model-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-  .model-card { padding:21px; border:1px solid var(--line); border-radius:17px; background:var(--surface); }
-  .model-number { display:grid; place-items:center; width:34px; height:34px; margin-bottom:20px; border-radius:11px; background:#1b2d47; color:var(--blue); font-size:.82rem; font-weight:800; }
-  .model-card h3 { margin:0 0 8px; font-size:1.02rem; }
-  .model-card p { margin:0; color:var(--muted); font-size:.87rem; }
-  .model-card .accent-line { width:32px; height:3px; margin-bottom:15px; border-radius:4px; background:var(--blue); }
-  .model-card:nth-child(2) .accent-line { background:var(--amber); }
-  .model-card:nth-child(3) .accent-line { background:var(--green); }
-  .results-note { margin-top:17px; padding:16px 18px; border:1px solid var(--line); border-radius:14px; color:var(--muted); background:rgba(17,26,45,.55); font-size:.86rem; }
-  footer { display:flex; justify-content:space-between; align-items:center; gap:18px; margin-top:78px; padding:24px 0 32px; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; }
-  footer a { color:var(--text); }
-  [hidden] { display:none!important; }
-  @media (max-width:850px) {
-    .hero { grid-template-columns:1fr; padding-top:48px; gap:30px; }
-    .hero-visual { min-height:300px; }
-    .workspace { grid-template-columns:1fr; }
-    .model-grid { grid-template-columns:1fr; }
-    .section-head { align-items:start; flex-direction:column; }
+  button { cursor: pointer; }
+  code { font-family: var(--mono); font-size: .85em; color: var(--text); }
+  .shell { width: min(1120px, calc(100% - 48px)); margin: 0 auto; }
+
+  /* nav */
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .brand { font-weight: 600; letter-spacing: -.02em; display: flex; align-items: center; gap: 10px; }
+  .brand i { width: 8px; height: 8px; background: var(--text); display: block; }
+  .nav-links { display: flex; gap: 28px; font-size: .85rem; color: var(--muted); }
+  .nav-links a { transition: color .15s; }
+  .nav-links a:hover { color: var(--text); }
+
+  /* hero */
+  .hero { display: grid; grid-template-columns: 1.15fr .85fr; gap: 64px; align-items: end; padding: 88px 0 80px; border-bottom: 1px solid var(--line); }
+  .label { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+  h1 { margin: 20px 0 22px; font-size: clamp(2.4rem, 5.2vw, 4.2rem); line-height: 1.04; letter-spacing: -.045em; font-weight: 600; }
+  h1 em { font-style: normal; color: var(--dim); }
+  .lede { max-width: 520px; color: var(--muted); font-size: 1.02rem; margin: 0; }
+  .actions { display: flex; gap: 10px; margin-top: 32px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--line-2); border-radius: 8px; font-size: .88rem; font-weight: 500; transition: background .15s, border-color .15s; }
+  .btn:hover { border-color: #55555f; background: #141418; }
+  .btn.primary { background: var(--accent); color: #09090b; border-color: var(--accent); }
+  .btn.primary:hover { background: #fff; }
+
+  .schematic { width: 100%; height: auto; display: block; }
+  .schematic text { font-family: var(--mono); font-size: 11px; fill: var(--muted); letter-spacing: .04em; }
+  .schematic .strong { fill: var(--text); }
+  .schematic line, .schematic path { stroke: var(--line-2); fill: none; stroke-width: 1; }
+  .schematic rect { fill: none; stroke: var(--line-2); }
+
+  /* sections */
+  section.block { padding: 88px 0 0; scroll-margin-top: 16px; }
+  .head { display: grid; grid-template-columns: 220px 1fr; gap: 40px; margin-bottom: 36px; }
+  .head h2 { margin: 0 0 10px; font-size: clamp(1.5rem, 2.6vw, 2rem); letter-spacing: -.035em; font-weight: 600; line-height: 1.15; }
+  .head p { margin: 0; color: var(--muted); max-width: 560px; }
+
+  /* demo */
+  .workspace { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(300px, .9fr); gap: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; }
+  .left { padding: 24px; border-right: 1px solid var(--line); min-width: 0; }
+  .right { min-width: 0; display: flex; flex-direction: column; }
+  .bar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .bar-top h3 { margin: 0; font-size: .88rem; font-weight: 600; }
+  .drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 180px; padding: 24px; text-align: center; border: 1px dashed var(--line-2); border-radius: 8px; cursor: pointer; transition: border-color .15s, background .15s; }
+  .drop:hover, .drop:focus-visible, .drop.over { outline: none; border-color: #6a6a76; background: #131317; }
+  .drop .plus { font-size: 1.4rem; line-height: 1; color: var(--muted); font-weight: 300; }
+  .drop strong { font-size: .9rem; font-weight: 500; }
+  .drop span.sub { color: var(--dim); font-size: .78rem; }
+  #status { min-height: 20px; margin-top: 12px; color: var(--muted); font-size: .8rem; font-family: var(--mono); }
+  .notice { margin-top: 10px; padding: 10px 12px; border-radius: 8px; font-size: .82rem; }
+  .notice.error { color: var(--err); border: 1px solid rgba(239,133,133,.25); background: rgba(239,133,133,.06); }
+  .notice.warn { color: #e2c288; border: 1px solid rgba(232,176,74,.22); background: rgba(232,176,74,.05); }
+
+  .stage { position: relative; margin-top: 14px; overflow: hidden; border-radius: 8px; background: #000; --ov: .55; }
+  .stage img { display: block; width: 100%; height: auto; }
+  .stage img.overlay { position: absolute; inset: 0; pointer-events: none; opacity: var(--ov); transition: opacity .15s; }
+  .stage img.overlay[hidden] { display: none; }
+  .stage[data-focus="road"] #ov-environment, .stage[data-focus="environment"] #ov-road { opacity: .06; }
+  .stage[data-focus="road"] #ov-road, .stage[data-focus="environment"] #ov-environment { opacity: .85; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 14px; color: var(--muted); font-size: .78rem; }
+  .controls label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+  .controls input[type=range] { width: 84px; accent-color: #d0d0d6; }
+  .controls input[type=checkbox] { accent-color: #d0d0d6; }
+  .chip { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex: none; }
+  .spacer { flex: 1; }
+
+  /* results */
+  .result-card { padding: 20px 24px; border-bottom: 1px solid var(--line); }
+  .result-card:last-of-type { border-bottom: 0; }
+  .result-card.primary { background: #131317; }
+  .result-card h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: .85rem; font-weight: 600; }
+  .result-card h3 .tag { margin-left: auto; font-family: var(--mono); font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); font-weight: 400; }
+  .result-sub { margin: 3px 0 14px; color: var(--dim); font-size: .75rem; }
+  .result-card.placeholder ol { opacity: .35; }
+  ol.guesses { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  ol.guesses li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: baseline; gap: 8px; }
+  .rank, .pct { color: var(--dim); font-family: var(--mono); font-size: .74rem; font-variant-numeric: tabular-nums; }
+  .pct { color: var(--muted); }
+  .country { font-weight: 500; font-size: .9rem; overflow-wrap: anywhere; }
+  .bar { grid-column: 2 / -1; height: 2px; background: var(--line); margin-top: -2px; }
+  .bar i { display: block; height: 100%; }
+  .hint { margin: 0; padding: 14px 24px; border-top: 1px solid var(--line); color: var(--dim); font-size: .75rem; }
+
+  /* gallery */
+  .gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .sample { display: none; padding: 0; overflow: hidden; text-align: left; color: var(--text); border: 1px solid var(--line); border-radius: 10px; background: var(--panel); transition: border-color .15s; }
+  .sample img { display: block; width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #000; filter: saturate(.92); transition: filter .2s; }
+  .sample span { display: block; padding: 10px 12px; font-size: .78rem; color: var(--muted); }
+  .sample:hover { border-color: #55555f; }
+  .sample:hover img { filter: none; }
+  .sample.show { display: block; }
+  .gallery-help { margin: 0 0 16px; color: var(--muted); font-size: .82rem; }
+
+  /* models */
+  .rows { border-top: 1px solid var(--line); }
+  .row { display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 26px 0; border-bottom: 1px solid var(--line); }
+  .row h3 { margin: 0; font-size: 1rem; font-weight: 600; letter-spacing: -.015em; display: flex; align-items: center; gap: 10px; }
+  .row h3 .n { font-family: var(--mono); font-size: .72rem; color: var(--dim); font-weight: 400; }
+  .row p { margin: 0; color: var(--muted); max-width: 560px; }
+
+  .note { margin: 0; padding: 18px 0 0; color: var(--muted); font-size: .88rem; max-width: 680px; }
+
+  footer { display: flex; justify-content: space-between; gap: 18px; margin-top: 96px; padding: 24px 0 40px; border-top: 1px solid var(--line); color: var(--dim); font-size: .8rem; }
+  footer a { color: var(--muted); transition: color .15s; }
+  footer a:hover { color: var(--text); }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 880px) {
+    .hero { grid-template-columns: 1fr; gap: 48px; padding: 56px 0; }
+    .schematic { max-width: 420px; }
+    .workspace { grid-template-columns: 1fr; }
+    .left { border-right: 0; border-bottom: 1px solid var(--line); }
+    .head, .row { grid-template-columns: 1fr; gap: 10px; }
   }
-  @media (max-width:600px) {
-    .shell { width:min(100% - 26px,1180px); }
-    .nav-links { gap:12px; font-size:.78rem; }
-    .nav-links a:not(.nav-cta) { display:none; }
-    .hero { padding:42px 0 32px; }
-    .hero-visual { min-height:250px; }
-    .metrics { grid-template-columns:repeat(2,1fr); }
-    .metric:nth-child(2) { border-right:0; }
-    .metric:nth-child(-n+2) { border-bottom:1px solid var(--line); }
-    section.content-section { padding-top:55px; }
-    .panel { padding:15px; }
-    .gallery { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    footer { align-items:flex-start; flex-direction:column; }
+  @media (max-width: 600px) {
+    .shell { width: calc(100% - 32px); }
+    .nav-links a:not(:last-child) { display: none; }
+    .left, .result-card { padding: 18px; }
+    .hint { padding: 12px 18px; }
+    .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    section.block { padding-top: 64px; }
+    footer { flex-direction: column; }
   }
 </style>
 </head>
 <body>
 <div class="shell">
   <nav class="nav" aria-label="Main navigation">
-    <a class="brand" href="#top"><span class="brand-mark">G</span> GeoBot</a>
+    <a class="brand" href="#top"><i></i>GeoBot</a>
     <div class="nav-links">
-      <a href="#try">Try it</a><a href="#models">Models</a><a href="#about">About</a>
-      <a class="nav-cta" href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">View source ↗</a>
+      <a href="#try">Demo</a><a href="#models">Models</a><a href="#about">About</a>
+      <a href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">GitHub ↗</a>
     </div>
   </nav>
 
   <header class="hero" id="top">
-    <div class="hero-copy">
-      <p class="eyebrow"><span class="dot"></span> Computer vision · Machine learning</p>
-      <h1>Can a model tell where a street photo was <span>taken?</span></h1>
-      <p>GeoBot explores country prediction from street-level imagery by comparing a general image model with specialists trained to focus on road features and the surrounding environment.</p>
+    <div>
+      <p class="label">Computer vision / Machine learning</p>
+      <h1>Where was this street photo <em>taken?</em></h1>
+      <p class="lede">GeoBot predicts the country of a street-level image by comparing a general model with two specialists, one reading the road, the other the landscape, then combining their scores into a single ranking.</p>
       <div class="actions">
-        <a class="button primary" href="#try">Try GeoBot <span>↓</span></a>
-        <a class="button" href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">Explore the code ↗</a>
+        <a class="btn primary" href="#try">Try it</a>
+        <a class="btn" href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">View source ↗</a>
       </div>
-      <div class="hero-foot"><strong>3 specialist perspectives</strong><span>·</span><span>1 weighted consensus</span></div>
     </div>
-    <div class="hero-visual" aria-label="Abstract illustration showing road and environment features being analyzed">
-      <div class="visual-grid"></div><div class="visual-sun"></div>
-      <div class="visual-hill back"></div><div class="visual-hill"></div><div class="visual-road"></div>
-      <div class="feature-box feature-road"><span>ROAD FEATURES</span></div>
-      <div class="feature-box feature-env"><span>ENVIRONMENT</span></div>
-      <div class="visual-tag"><span class="dot"></span> Visual feature analysis</div>
-    </div>
+    <svg class="schematic" viewBox="0 0 360 220" role="img" aria-label="Three models feeding a weighted consensus">
+      <rect x="1" y="20" width="130" height="36"/><text x="14" y="42" class="strong">HOLISTIC</text>
+      <rect x="1" y="92" width="130" height="36"/><text x="14" y="114" class="strong">ROAD</text>
+      <rect x="1" y="164" width="130" height="36"/><text x="14" y="186" class="strong">ENVIRONMENT</text>
+      <path d="M131 38 H200 V110"/><path d="M131 110 H228"/><path d="M131 182 H200 V110"/>
+      <rect x="228" y="84" width="130" height="52"/>
+      <text x="241" y="107" class="strong">CONSENSUS</text><text x="241" y="123">weighted score</text>
+    </svg>
   </header>
 
-  <div class="metrics" aria-label="Project overview">
-    <div class="metric"><strong>01</strong><span>Holistic model</span></div>
-    <div class="metric"><strong>02</strong><span>Road specialist</span></div>
-    <div class="metric"><strong>03</strong><span>Environment specialist</span></div>
-    <div class="metric"><strong>04</strong><span>Consensus ranking</span></div>
-  </div>
-
-  <section class="content-section" id="try">
-    <div class="section-head">
-      <div><p class="kicker">Interactive demo</p><h2>Test a photo yourself.</h2></div>
-      <p>Upload a JPEG or PNG, or choose one of the example images. GeoBot will rank likely countries and show the visual regions used by the specialist models.</p>
+  <section class="block" id="try">
+    <div class="head">
+      <p class="label">Demo</p>
+      <div>
+        <h2>Test a photo.</h2>
+        <p>Upload a JPEG or PNG, or pick an example. GeoBot ranks likely countries and shows the regions each specialist looked at.</p>
+      </div>
     </div>
 
     <div class="workspace">
-      <div class="panel">
-        <div class="panel-title"><h3>Choose an image</h3><span class="pill">JPEG / PNG · 10 MB max</span></div>
+      <div class="left">
+        <div class="bar-top"><h3>Image</h3><span class="label">JPEG / PNG · 10 MB</span></div>
         <label class="drop" id="drop" for="file" tabindex="0">
           <input type="file" id="file" accept="image/jpeg,image/png" hidden>
-          <span class="upload-icon">↑</span>
-          <strong>Drop a street-level photo here</strong>
-          <span>or click to browse · you can also paste an image</span>
+          <span class="plus">+</span>
+          <strong>Drop a street-level photo</strong>
+          <span class="sub">or click to browse · paste also works</span>
         </label>
         <div id="status" role="status" aria-live="polite"></div>
         <div class="notice error" id="error" hidden></div>
@@ -217,8 +212,8 @@
             <img class="overlay" id="ov-road" alt="">
           </div>
           <div class="controls">
-            <label><input type="checkbox" id="tg-environment" checked><span class="chip" style="background:var(--green)"></span>Environment <span id="cov-environment"></span></label>
-            <label><input type="checkbox" id="tg-road" checked><span class="chip" style="background:var(--amber)"></span>Road &amp; traffic <span id="cov-road"></span></label>
+            <label><input type="checkbox" id="tg-environment" checked><span class="chip" style="background:var(--env)"></span>Environment <span id="cov-environment"></span></label>
+            <label><input type="checkbox" id="tg-road" checked><span class="chip" style="background:var(--road)"></span>Road &amp; traffic <span id="cov-road"></span></label>
             <span class="spacer"></span>
             <label>Opacity <input type="range" id="opacity" min="10" max="100" value="55"></label>
           </div>
@@ -226,70 +221,79 @@
         </div>
       </div>
 
-      <div id="right">
-        <div class="panel result-card primary placeholder" id="card-consensus">
-          <div class="panel-title"><h3>Final consensus</h3><span class="pill">Combined model</span></div>
+      <div class="right" id="right">
+        <div class="result-card primary placeholder" id="card-consensus">
+          <h3>Consensus <span class="tag">Combined</span></h3>
           <p class="result-sub" id="weights">Weighted combination of all three models</p>
           <ol class="guesses"><li><span class="rank">—</span><span class="country">Predictions appear here</span><span class="pct"></span></li></ol>
         </div>
-        <div class="panel result-card placeholder" id="card-holistic">
-          <h3>Holistic <span class="pill">Whole image</span></h3><p class="result-sub">Looks at the full photo.</p>
+        <div class="result-card placeholder" id="card-holistic">
+          <h3>Holistic <span class="tag">Whole image</span></h3><p class="result-sub">Looks at the full photo.</p>
           <ol class="guesses"><li><span class="rank">—</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
         </div>
-        <div class="panel result-card placeholder" id="card-road">
-          <h3><span class="chip" style="background:var(--amber)"></span>Road specialist</h3><p class="result-sub">Focuses on roads, sidewalks, vehicles, poles and signs.</p>
+        <div class="result-card placeholder" id="card-road">
+          <h3><span class="chip" style="background:var(--road)"></span>Road specialist</h3><p class="result-sub">Roads, sidewalks, vehicles, poles and signs.</p>
           <ol class="guesses"><li><span class="rank">—</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
         </div>
-        <div class="panel result-card placeholder" id="card-environment">
-          <h3><span class="chip" style="background:var(--green)"></span>Environment specialist</h3><p class="result-sub">Focuses on vegetation and terrain.</p>
+        <div class="result-card placeholder" id="card-environment">
+          <h3><span class="chip" style="background:var(--env)"></span>Environment specialist</h3><p class="result-sub">Vegetation and terrain.</p>
           <ol class="guesses"><li><span class="rank">—</span><span class="country">Awaiting image</span><span class="pct"></span></li></ol>
         </div>
-        <p class="hint">Hover over a specialist result to spotlight its region on the image.</p>
+        <p class="hint">Hover a specialist to spotlight its region on the image.</p>
       </div>
     </div>
   </section>
 
-  <section class="content-section" id="examples">
-    <div class="section-head">
-      <div><p class="kicker">Try a sample</p><h2>Explore with example images.</h2></div>
-      <p>Sample cards appear automatically when you add images to the examples folder in the repository.</p>
+  <section class="block" id="examples">
+    <div class="head">
+      <p class="label">Examples</p>
+      <div>
+        <h2>Start from a sample.</h2>
+        <p>Cards appear automatically when images are added to the examples folder.</p>
+      </div>
     </div>
     <p class="gallery-help" id="galleryHelp">No example images found yet. Add JPEG or PNG files to <code>geobot_app/static/examples/</code> to enable one-click demos.</p>
     <div class="gallery" id="gallery">
-      <button class="sample" type="button" data-src="/static/examples/example-1.jpg"><img alt="Example street scene"><span>Example 01 · Street scene</span></button>
-      <button class="sample" type="button" data-src="/static/examples/example-2.jpg"><img alt="Example road and landscape"><span>Example 02 · Road &amp; landscape</span></button>
-      <button class="sample" type="button" data-src="/static/examples/example-3.jpg"><img alt="Example neighborhood"><span>Example 03 · Neighborhood</span></button>
+      <button class="sample" type="button" data-src="/static/examples/example-1.jpg"><img alt="Example street scene"><span>01 · Street scene</span></button>
+      <button class="sample" type="button" data-src="/static/examples/example-2.jpg"><img alt="Example road and landscape"><span>02 · Road &amp; landscape</span></button>
+      <button class="sample" type="button" data-src="/static/examples/example-3.jpg"><img alt="Example neighborhood"><span>03 · Neighborhood</span></button>
     </div>
   </section>
 
-  <section class="content-section" id="models">
-    <div class="section-head">
-      <div><p class="kicker">How it works</p><h2>Three views of the same place.</h2></div>
-      <p>Each model contributes a different kind of visual evidence. The consensus combines their scores using configurable weights.</p>
+  <section class="block" id="models">
+    <div class="head">
+      <p class="label">Method</p>
+      <div>
+        <h2>Three views of the same place.</h2>
+        <p>Each model contributes a different kind of evidence. The consensus combines their scores using configurable weights.</p>
+      </div>
     </div>
-    <div class="model-grid">
-      <article class="model-card"><div class="model-number">01</div><div class="accent-line"></div><h3>Holistic model</h3><p>Analyzes the full image to learn broad patterns such as architecture, road layout, and the overall scene.</p></article>
-      <article class="model-card"><div class="model-number">02</div><div class="accent-line"></div><h3>Road specialist</h3><p>Uses a segmented view focused on road-related features, including sidewalks, vehicles, poles, and signs.</p></article>
-      <article class="model-card"><div class="model-number">03</div><div class="accent-line"></div><h3>Environment specialist</h3><p>Uses a segmented view emphasizing vegetation and terrain that may help distinguish regions.</p></article>
+    <div class="rows">
+      <article class="row"><h3><span class="n">01</span>Holistic</h3><p>Analyzes the full image to learn broad patterns such as architecture, road layout, and the overall scene.</p></article>
+      <article class="row"><h3><span class="n">02</span>Road specialist</h3><p>Uses a segmented view focused on road-related features, including sidewalks, vehicles, poles, and signs.</p></article>
+      <article class="row"><h3><span class="n">03</span>Environment specialist</h3><p>Uses a segmented view emphasizing vegetation and terrain that may help distinguish regions.</p></article>
     </div>
   </section>
 
-  <section class="content-section" id="about">
-    <div class="section-head">
-      <div><p class="kicker">About the project</p><h2>Experiment, compare, improve.</h2></div>
-      <p>GeoBot is an ongoing machine learning project investigating whether specialized visual features can improve country-level image classification.</p>
+  <section class="block" id="about">
+    <div class="head">
+      <p class="label">About</p>
+      <div>
+        <h2>Experiment, compare, improve.</h2>
+        <p>GeoBot is an ongoing project investigating whether specialized visual features can improve country-level image classification.</p>
+        <p class="note">Percentages are model scores, not real-world probabilities. Accuracy depends on the image, the training data, and how closely the photo resembles what the models learned from.</p>
+      </div>
     </div>
-    <div class="results-note">The percentages shown are model scores, not guaranteed real-world probabilities. Accuracy depends on the image, the training data, and whether the photo resembles examples the models learned from. This is an experimental project, so results should be interpreted with that limitation in mind.</div>
   </section>
 
   <footer>
-    <span>GeoBot · A computer vision portfolio project</span>
-    <a href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">Source code on GitHub ↗</a>
+    <span>GeoBot · Computer vision portfolio project</span>
+    <a href="https://github.com/Charles-Stemmle/GeoBot" target="_blank" rel="noreferrer">Source on GitHub ↗</a>
   </footer>
 </div>
 
 <script>
-const COLORS = { holistic: "#7cb6ff", consensus: "#7cb6ff", road: "#ffc36b", environment: "#66d6a2" };
+const COLORS = { holistic: "#d6d6dc", consensus: "#f2f2f4", road: "#e8b04a", environment: "#5fbf8f" };
 const MAX_BYTES = 10 * 1024 * 1024;
 const $ = (id) => document.getElementById(id);
 
@@ -348,7 +352,7 @@ function render(data) {
     div.textContent = message;
     warnings.append(div);
   });
-  $("status").textContent = `Analysis complete · ${(data.elapsed_ms / 1000).toFixed(1)} seconds`;
+  $("status").textContent = `Analysis complete · ${(data.elapsed_ms / 1000).toFixed(1)}s`;
 }
 
 async function analyze(file) {
@@ -361,7 +365,7 @@ async function analyze(file) {
     showError("That file is larger than 10 MB.");
     return;
   }
-  $("status").textContent = "Analyzing image… The first request may take longer while the server wakes up.";
+  $("status").textContent = "Analyzing… the first request may take longer while the server wakes up.";
   $("stageWrap").hidden = true;
   try {
     const body = new FormData();
